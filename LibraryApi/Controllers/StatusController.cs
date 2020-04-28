@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using LibraryApi.Services;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +9,13 @@ namespace LibraryApi.Controllers
 {
     public class StatusController : Controller
     {
+        ISystemTime systemTime;
+
+        public StatusController(ISystemTime systemTime)
+        {
+            this.systemTime = systemTime;
+        }
+
         // GET / status -> 200 ok
         [HttpGet("/status")]
         public ActionResult GetTheStatus()
@@ -16,9 +24,33 @@ namespace LibraryApi.Controllers
             {
                 Message = "Everything is golden!",
                 CheckedBy = "Joe Schmidt",
-                WhenLastChecked = DateTime.Now
+                WhenLastChecked = systemTime.GetCurrent()
             };
             return Ok(response);
+        }
+
+        [HttpGet("employees/{employeeId:int:min(1)}/salary")]
+        public ActionResult GetEmployeeSalary(int employeeId)
+        {
+            return Ok($"The Employee {employeeId} has a salary of $72,00.00");
+        }
+
+        [HttpGet("employees")]
+        public ActionResult GetEmployees([FromQuery]string dept = "All")
+        {
+            return Ok($"Returning employees for department {dept}");
+        }
+
+        [HttpGet("whoami")]
+        public ActionResult WhoAmi([FromHeader(Name = "User-Agent")] string agent)
+        {
+            return Ok($"I see you are running {agent}");
+        }
+
+        [HttpPost("employees")]
+        public ActionResult HireEmployee([FromBody] EmployeeCreateRequest employeeToHire, [FromHeader(Name = "Content-Type")] string contentType)
+        {
+            return Ok($"Hiring {employeeToHire.LastName} as a {employeeToHire.Department} \r {contentType}");
         }
     }
 
@@ -28,4 +60,11 @@ namespace LibraryApi.Controllers
         public string CheckedBy { get; set; }
         public DateTime WhenLastChecked { get; set; }
     }
+    public class EmployeeCreateRequest
+    {
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public string Department { get; set; }
+    }
+
 }
